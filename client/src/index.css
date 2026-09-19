@@ -1,0 +1,66 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
+@import "tailwindcss";
+@import "tw-animate-css";
+
+:root {
+  --background: 40 33% 97%;
+  --foreground: 224 37% 15%;
+  --card: 0 0% 100%;
+  --card-foreground: 224 37% 15%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 224 37% 15%;
+  --primary: 224 37% 15%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 40 32% 94%;
+  --secondary-foreground: 224 37% 15%;
+  --muted: 40 20% 94%;
+  --muted-foreground: 224 16% 49%;
+  --accent: 40 92% 64%;
+  --accent-foreground: 224 37% 15%;
+  --destructive: 0 70% 55%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 224 24% 88%;
+  --input: 224 24% 88%;
+  --ring: 164 50% 38%;
+  --radius: 0.9rem;
+}
+
+@theme inline {
+  --font-sans: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --color-ink: #182035;
+  --color-saffron: #f6be55;
+  --color-mint: #2f9383;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; min-width: 320px; background: #f8f6f1; font-family: 'DM Sans', ui-sans-serif, system-ui, sans-serif; color: #182035; -webkit-font-smoothing: antialiased; }
+button, input, textarea, select { font: inherit; }
+button { cursor: pointer; }
+button:disabled { cursor: not-allowed; opacity: 0.7; }
+.font-display { font-family: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif; }
+::selection { background: rgba(246,190,85,0.42); color: #182035; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
+}
