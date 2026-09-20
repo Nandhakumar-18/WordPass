@@ -1,21 +1,31 @@
-﻿import { z } from "zod";
+import { z } from "zod";
 import { COOKIE_NAME } from "@shared/const";
 import type { PassportSnapshot, PresentationClaims, WorkPassJob } from "@shared/types";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
+import { getDb } from "./db";
+import { jobs } from "../drizzle/schema";
+import { eq, desc } from "drizzle-orm";
+import { nanoid } from "nanoid";
 
-const seededJobs: WorkPassJob[] = [
-  { id: "job-1", type: "AC service", amountInr: 1200, customer: "Sharma ji", date: "2026-09-19", evidence: "L0", status: "pending" },
-  { id: "job-2", type: "Wiring repair", amountInr: 850, customer: "Meena R.", date: "2026-09-18", evidence: "L1", status: "confirmed" },
-  { id: "job-3", type: "Fan installation", amountInr: 600, customer: "Anita K.", date: "2026-09-17", evidence: "L2", status: "confirmed" },
-  { id: "job-4", type: "AC service", amountInr: 1800, customer: "Ravi P.", date: "2026-09-15", evidence: "L3", status: "confirmed" },
-];
+async function getJobsFromDb(): Promise<WorkPassJob[]> {
+  const db = await getDb();
+  if (!db) return [];
+  const dbJobs = await db.select().from(jobs).orderBy(desc(jobs.createdAt));
+  return dbJobs.map((j) => ({
+    id: j.id,
+    type: j.type,
+    amountInr: j.amountInr,
+    customer: j.customer,
+    date: j.date,
+    evidence: j.evidence as "L0" | "L1" | "L2" | "L3",
+    status: j.status as "pending" | "confirmed" | "needs_review",
+  }));
+}
 
-let currentJobs = [...seededJobs];
-let jobSequence = 5;
-
-function makePassport(): PassportSnapshot {
+async function makePassport(): Promise<PassportSnapshot> {
+  const currentJobs = await getJobsFromDb();
   const confirmed = currentJobs.filter((job) => job.evidence !== "L0").length;
   const score = currentJobs.some((job) => job.evidence === "L2") ? 82 : 78;
   return {
@@ -51,48 +61,50 @@ export const appRouter = router({
     }),
   }),
   workpass: router({
-    getPassport: publicProcedure.query(() => makePassport()),
+    getPassport: publicProcedure.query(async () => await makePassport()),
 
     recordVoice: publicProcedure
       .input(z.object({ transcript: z.string().min(1) }))
-      .mutation(({ input }) => {
-        const job: WorkPassJob = {
-          id: `job-${jobSequence++}`,
-          type: "AC service",
-          amountInr: 1200,
-          customer: "Sharma ji",
-          date: "2026-09-19",
-          evidence: "L0",
-          status: "pending",
-        };
+      .mutation(async ({ input }) => {
+        const id = `job-${nanoid(6)}`;
+        const db = await getDb();
+        if (db) {
+          await db.insert(jobs).values({
+            id,
+            type: "AC service",
+            amountInr: 1200,
+            customer: "Sharma ji",
+            date: new Date().toISOString().split("T")[0],
+            evidence: "L0",
+            status: "pending",
+          });
+        }
         return {
           transcript: input.transcript,
           confidence: 0.86,
           clarification: null,
-          job: { id: job.id, type: job.type, amount: "₹1,200", customer: job.customer },
+          job: { id, type: "AC service", amount: "₹1,200", customer: "Sharma ji" },
         };
       }),
 
     confirmJob: publicProcedure
       .input(z.object({ jobId: z.string() }))
-      .mutation(({ input }) => {
-        const existing = currentJobs.find((job) => job.id === input.jobId);
-        if (existing) {
-          existing.status = "pending";
-          existing.evidence = "L0";
-        } else {
-          currentJobs.unshift({ id: input.jobId, type: "AC service", amountInr: 1200, customer: "Sharma ji", date: "2026-09-19", evidence: "L0", status: "pending" });
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (db) {
+           await db.update(jobs).set({ evidence: "L0", status: "pending" }).where(eq(jobs.id, input.jobId));
         }
         return { success: true, jobId: input.jobId };
       }),
 
     customerRespond: publicProcedure
       .input(z.object({ jobId: z.string(), response: z.enum(["confirm", "different", "didnt_happen"]) }))
-      .mutation(({ input }) => {
-        const job = currentJobs.find((item) => item.id === input.jobId);
-        if (job) {
-          job.evidence = input.response === "confirm" ? "L2" : "L0";
-          job.status = input.response === "confirm" ? "confirmed" : "needs_review";
+      .mutation(async ({ input }) => {
+        const db = await getDb();
+        if (db) {
+          const evidence = input.response === "confirm" ? "L2" : "L0";
+          const status = input.response === "confirm" ? "confirmed" : "needs_review";
+          await db.update(jobs).set({ evidence, status }).where(eq(jobs.id, input.jobId));
         }
         return { success: true, evidence: input.response === "confirm" ? "L2" : "needs_review" };
       }),
