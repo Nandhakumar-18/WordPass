@@ -1,4 +1,4 @@
-import { z } from "zod";
+﻿import { z } from "zod";
 import { COOKIE_NAME } from "@shared/const";
 import type { PassportSnapshot, PresentationClaims, WorkPassJob } from "@shared/types";
 import { getSessionCookieOptions } from "./_core/cookies";
@@ -19,7 +19,7 @@ function makePassport(): PassportSnapshot {
   const confirmed = currentJobs.filter((job) => job.evidence !== "L0").length;
   const score = currentJobs.some((job) => job.evidence === "L2") ? 82 : 78;
   return {
-    name: "Lakshmi S.",
+    name: "John S.",
     score,
     trustLevel: "Strong",
     evidenceCount: 38 + Math.max(0, confirmed - 3),
@@ -126,7 +126,7 @@ export const appRouter = router({
         id: "flag-1",
         type: "confirmation_ring",
         severity: "low",
-        worker: "Lakshmi S.",
+        worker: "John S.",
         reason: "Three customer accounts were created recently and only confirm this worker. The accounts form a dense confirmation pattern.",
         state: "needs_review",
       },
